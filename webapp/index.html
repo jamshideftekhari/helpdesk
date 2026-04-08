@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Helpdesk</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f4f6f9;
+      --surface: #ffffff;
+      --border: #e0e4ea;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --danger: #dc2626;
+      --warning: #d97706;
+      --success: #16a34a;
+      --muted: #6b7280;
+      --text: #111827;
+      --radius: 8px;
+    }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    header h1 { font-size: 18px; font-weight: 600; }
+
+    main {
+      max-width: 960px;
+      margin: 24px auto;
+      padding: 0 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* ---- Card ---- */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    .card h2 { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
+
+    /* ---- Form ---- */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .form-grid .full { grid-column: 1 / -1; }
+
+    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      background: var(--bg);
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+
+    textarea { resize: vertical; min-height: 72px; }
+
+    /* ---- Buttons ---- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: 6px;
+      border: none;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    .btn-primary  { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-danger   { background: var(--danger); color: #fff; }
+    .btn-warning  { background: var(--warning); color: #fff; }
+    .btn-success  { background: var(--success); color: #fff; }
+    .btn-ghost    { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-ghost:hover { background: var(--bg); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ---- Status badge ---- */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+
+    .badge-open      { background: #dcfce7; color: #15803d; }
+    .badge-escalated { background: #fef9c3; color: #a16207; }
+    .badge-closed    { background: #f3f4f6; color: #6b7280; }
+
+    .priority-low    { color: #2563eb; }
+    .priority-medium { color: #0891b2; }
+    .priority-high   { color: #d97706; }
+    .priority-urgent { color: #dc2626; font-weight: 600; }
+
+    /* ---- Ticket list ---- */
+    .ticket-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .ticket-row {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .ticket-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      cursor: pointer;
+      background: var(--surface);
+      user-select: none;
+    }
+
+    .ticket-header:hover { background: #f9fafb; }
+
+    .ticket-subject { flex: 1; font-weight: 500; }
+    .ticket-meta    { color: var(--muted); font-size: 12px; }
+    .ticket-id      { font-family: monospace; font-size: 11px; color: var(--muted); }
+
+    .ticket-body {
+      display: none;
+      padding: 16px;
+      border-top: 1px solid var(--border);
+      background: #fafbfc;
+    }
+
+    .ticket-body.open { display: block; }
+
+    /* ---- Detail grid ---- */
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 6px 12px;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+
+    .detail-grid .key { color: var(--muted); }
+
+    /* ---- Messages ---- */
+    .messages { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+
+    .message {
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .message-customer { background: #eff6ff; border-left: 3px solid #2563eb; }
+    .message-agent    { background: #f0fdf4; border-left: 3px solid #16a34a; }
+    .message-system   { background: #f9fafb; border-left: 3px solid #9ca3af; }
+
+    .message-author { font-weight: 600; font-size: 12px; margin-bottom: 2px; }
+
+    /* ---- Actions ---- */
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+
+    /* ---- Action form ---- */
+    .action-form {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      margin-top: 8px;
+      background: var(--surface);
+      display: none;
+    }
+
+    .action-form.open { display: block; }
+    .action-form h4   { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+    .action-form .form-row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+    .action-form .form-row > div { flex: 1; min-width: 140px; }
+
+    /* ---- Toast ---- */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #fff;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s;
+      z-index: 999;
+    }
+
+    #toast.show { opacity: 1; }
+    #toast.ok  { background: var(--success); }
+    #toast.err { background: var(--danger); }
+
+    .empty { color: var(--muted); text-align: center; padding: 32px 0; }
+
+    .chevron { transition: transform .2s; display: inline-block; }
+    .chevron.up { transform: rotate(180deg); }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Helpdesk</h1>
+  <button class="btn btn-ghost" onclick="loadTickets()">Refresh</button>
+</header>
+
+<main>
+  <!-- New ticket form -->
+  <div class="card">
+    <h2>Open new ticket</h2>
+    <div class="form-grid">
+      <div>
+        <label>Customer ID</label>
+        <input id="new-customer" placeholder="e.g. alice" />
+      </div>
+      <div>
+        <label>Priority</label>
+        <select id="new-priority">
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
+          <option value="urgent">Urgent</option>
+        </select>
+      </div>
+      <div class="full">
+        <label>Subject</label>
+        <input id="new-subject" placeholder="Short description of the issue" />
+      </div>
+      <div class="full">
+        <label>Message</label>
+        <textarea id="new-body" placeholder="Describe the problem in detail..."></textarea>
+      </div>
+      <div class="full" style="display:flex;justify-content:flex-end">
+        <button class="btn btn-primary" onclick="openTicket()">Open ticket</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ticket list -->
+  <div class="card">
+    <h2>Tickets</h2>
+    <div id="ticket-list" class="ticket-list">
+      <p class="empty">Loading...</p>
+    </div>
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+  const API = 'https://helpdeskapp-gsehaygscwf4cvhw.polandcentral-01.azurewebsites.net';
+
+  // ------------------------------------------------------------------ //
+  // HTTP helpers                                                         //
+  // ------------------------------------------------------------------ //
+
+  async function api(method, path, body) {
+    const res = await fetch(API + path, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Request failed');
+    return data;
+  }
+
+  // ------------------------------------------------------------------ //
+  // Toast                                                                //
+  // ------------------------------------------------------------------ //
+
+  let _toastTimer;
+  function toast(msg, type = 'ok') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = `show ${type}`;
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => el.className = '', 3000);
+  }
+
+  // ------------------------------------------------------------------ //
+  // Render                                                               //
+  // ------------------------------------------------------------------ //
+
+  function badgeHtml(status) {
+    return `<span class="badge badge-${status}">${status}</span>`;
+  }
+
+  function priorityHtml(p) {
+    return `<span class="priority-${p}">${p}</span>`;
+  }
+
+  function fmt(dt) {
+    if (!dt) return '—';
+    return new Date(dt).toLocaleString();
+  }
+
+  function renderTickets(tickets) {
+    const el = document.getElementById('ticket-list');
+    if (!tickets.length) {
+      el.innerHTML = '<p class="empty">No tickets yet. Open one above.</p>';
+      return;
+    }
+    el.innerHTML = tickets.map(t => ticketHtml(t)).join('');
+  }
+
+  function ticketHtml(t) {
+    const short = t.id.slice(0, 8);
+    const msgs = t.messages.map(m => `
+      <div class="message message-${m.author}">
+        <div class="message-author">${m.author_id} (${m.author})</div>
+        <div>${m.body}</div>
+      </div>`).join('');
+
+    const canAppend   = t.status !== 'closed';
+    const canAck      = t.status === 'escalated';
+    const canEscalate = t.status === 'open';
+    const canClose    = t.status !== 'closed';
+    const canReopen   = t.status === 'closed';
+
+    return `
+    <div class="ticket-row" id="ticket-${t.id}">
+      <div class="ticket-header" onclick="toggleTicket('${t.id}')">
+        <span class="chevron" id="chev-${t.id}">▼</span>
+        ${badgeHtml(t.status)}
+        <span class="ticket-subject">${t.subject}</span>
+        <span class="ticket-meta">${priorityHtml(t.priority)}</span>
+        <span class="ticket-meta">${t.customer_id}</span>
+        <span class="ticket-id">${short}</span>
+      </div>
+      <div class="ticket-body" id="body-${t.id}">
+
+        <div class="detail-grid">
+          <span class="key">ID</span>          <span>${t.id}</span>
+          <span class="key">Customer</span>    <span>${t.customer_id}</span>
+          <span class="key">Agent</span>       <span>${t.agent_id || '—'}</span>
+          <span class="key">SLA deadline</span><span>${fmt(t.sla_deadline)}</span>
+          ${t.auto_reassign_deadline ? `<span class="key">Auto-reassign</span><span>${fmt(t.auto_reassign_deadline)}</span>` : ''}
+          ${t.closed_at ? `<span class="key">Closed at</span><span>${fmt(t.closed_at)}</span>` : ''}
+        </div>
+
+        <div class="messages">${msgs}</div>
+
+        <div class="actions">
+          ${canAppend   ? `<button class="btn btn-ghost"    onclick="toggleForm('${t.id}','msg')">Add message</button>` : ''}
+          ${canAck      ? `<button class="btn btn-ghost"    onclick="toggleForm('${t.id}','ack')">Acknowledge</button>` : ''}
+          ${canEscalate ? `<button class="btn btn-warning"  onclick="toggleForm('${t.id}','escalate')">Escalate</button>` : ''}
+          ${canClose    ? `<button class="btn btn-danger"   onclick="toggleForm('${t.id}','close')">Close</button>` : ''}
+          ${canReopen   ? `<button class="btn btn-success"  onclick="toggleForm('${t.id}','reopen')">Reopen</button>` : ''}
+        </div>
+
+        <!-- Add message -->
+        <div class="action-form" id="form-${t.id}-msg">
+          <h4>Add message</h4>
+          <div class="form-row">
+            <div><label>Role</label>
+              <select id="${t.id}-msg-author">
+                <option value="customer">Customer</option>
+                <option value="agent">Agent</option>
+              </select>
+            </div>
+            <div><label>Author ID</label><input id="${t.id}-msg-author-id" placeholder="e.g. alice" /></div>
+            <div style="flex:2"><label>Message</label><input id="${t.id}-msg-body" placeholder="Message text" /></div>
+            <button class="btn btn-primary" onclick="doAppendMessage('${t.id}')">Send</button>
+          </div>
+        </div>
+
+        <!-- Acknowledge -->
+        <div class="action-form" id="form-${t.id}-ack">
+          <h4>Acknowledge</h4>
+          <div class="form-row">
+            <div><label>Agent ID</label><input id="${t.id}-ack-agent" placeholder="e.g. agent1" /></div>
+            <button class="btn btn-primary" onclick="doAcknowledge('${t.id}')">Confirm</button>
+          </div>
+        </div>
+
+        <!-- Escalate -->
+        <div class="action-form" id="form-${t.id}-escalate">
+          <h4>Escalate</h4>
+          <div class="form-row">
+            <div><label>Escalated by (customer ID)</label><input id="${t.id}-esc-by" placeholder="e.g. alice" /></div>
+            <button class="btn btn-warning" onclick="doEscalate('${t.id}')">Confirm</button>
+          </div>
+        </div>
+
+        <!-- Close -->
+        <div class="action-form" id="form-${t.id}-close">
+          <h4>Close ticket</h4>
+          <div class="form-row">
+            <div><label>Closed by</label><input id="${t.id}-close-by" placeholder="e.g. alice" /></div>
+            <div><label>Role</label>
+              <select id="${t.id}-close-role">
+                <option value="customer">Customer</option>
+                <option value="agent">Agent</option>
+                <option value="manager">Manager</option>
+                <option value="system">System</option>
+              </select>
+            </div>
+            <button class="btn btn-danger" onclick="doClose('${t.id}')">Confirm</button>
+          </div>
+        </div>
+
+        <!-- Reopen -->
+        <div class="action-form" id="form-${t.id}-reopen">
+          <h4>Reopen ticket</h4>
+          <div class="form-row">
+            <div><label>Reopened by (customer ID)</label><input id="${t.id}-reopen-by" placeholder="e.g. alice" /></div>
+            <button class="btn btn-success" onclick="doReopen('${t.id}')">Confirm</button>
+          </div>
+        </div>
+
+      </div>
+    </div>`;
+  }
+
+  // ------------------------------------------------------------------ //
+  // Toggle helpers                                                       //
+  // ------------------------------------------------------------------ //
+
+  function toggleTicket(id) {
+    document.getElementById(`body-${id}`).classList.toggle('open');
+    document.getElementById(`chev-${id}`).classList.toggle('up');
+  }
+
+  function toggleForm(ticketId, action) {
+    const el = document.getElementById(`form-${ticketId}-${action}`);
+    el.classList.toggle('open');
+  }
+
+  // ------------------------------------------------------------------ //
+  // Commands                                                             //
+  // ------------------------------------------------------------------ //
+
+  async function openTicket() {
+    const customer = document.getElementById('new-customer').value.trim();
+    const priority = document.getElementById('new-priority').value;
+    const subject  = document.getElementById('new-subject').value.trim();
+    const body     = document.getElementById('new-body').value.trim();
+    if (!customer || !subject || !body) { toast('Fill in all fields', 'err'); return; }
+    try {
+      await api('POST', '/tickets', { customer_id: customer, priority, subject, body });
+      toast('Ticket opened');
+      document.getElementById('new-customer').value = '';
+      document.getElementById('new-subject').value  = '';
+      document.getElementById('new-body').value     = '';
+      loadTickets();
+    } catch (e) { toast(e.message, 'err'); }
+  }
+
+  async function doAppendMessage(id) {
+    const author    = document.getElementById(`${id}-msg-author`).value;
+    const author_id = document.getElementById(`${id}-msg-author-id`).value.trim();
+    const body      = document.getElementById(`${id}-msg-body`).value.trim();
+    if (!author_id || !body) { toast('Fill in all fields', 'err'); return; }
+    try {
+      await api('POST', `/tickets/${id}/messages`, { author, author_id, body });
+      toast('Message added');
+      loadTickets();
+    } catch (e) { toast(e.message, 'err'); }
+  }
+
+  async function doAcknowledge(id) {
+    const agent_id = document.getElementById(`${id}-ack-agent`).value.trim();
+    if (!agent_id) { toast('Enter agent ID', 'err'); return; }
+    try {
+      await api('POST', `/tickets/${id}/acknowledge`, { agent_id });
+      toast('Ticket acknowledged');
+      loadTickets();
+    } catch (e) { toast(e.message, 'err'); }
+  }
+
+  async function doEscalate(id) {
+    const escalated_by = document.getElementById(`${id}-esc-by`).value.trim();
+    if (!escalated_by) { toast('Enter customer ID', 'err'); return; }
+    try {
+      await api('POST', `/tickets/${id}/escalate`, { escalated_by });
+      toast('Ticket escalated');
+      loadTickets();
+    } catch (e) { toast(e.message, 'err'); }
+  }
+
+  async function doClose(id) {
+    const closed_by      = document.getElementById(`${id}-close-by`).value.trim();
+    const closed_by_role = document.getElementById(`${id}-close-role`).value;
+    if (!closed_by) { toast('Enter actor ID', 'err'); return; }
+    try {
+      await api('POST', `/tickets/${id}/close`, { closed_by, closed_by_role });
+      toast('Ticket closed');
+      loadTickets();
+    } catch (e) { toast(e.message, 'err'); }
+  }
+
+  async function doReopen(id) {
+    const reopened_by = document.getElementById(`${id}-reopen-by`).value.trim();
+    if (!reopened_by) { toast('Enter customer ID', 'err'); return; }
+    try {
+      await api('POST', `/tickets/${id}/reopen`, { reopened_by });
+      toast('Ticket reopened');
+      loadTickets();
+    } catch (e) { toast(e.message, 'err'); }
+  }
+
+  // ------------------------------------------------------------------ //
+  // Load                                                                 //
+  // ------------------------------------------------------------------ //
+
+  async function loadTickets() {
+    try {
+      const tickets = await api('GET', '/tickets');
+      renderTickets(tickets.reverse());
+    } catch (e) {
+      document.getElementById('ticket-list').innerHTML = `<p class="empty">Could not load tickets: ${e.message}</p>`;
+    }
+  }
+
+  loadTickets();
+</script>
+</body>
+</html>

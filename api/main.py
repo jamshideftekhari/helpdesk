@@ -3,6 +3,7 @@ from __future__ import annotations
 from uuid import UUID
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
 from ticket.domain.aggregates import Ticket, TicketError
 from ticket.domain.value_objects import MessageAuthor
@@ -19,6 +20,13 @@ from api.schemas import (
 )
 
 app = FastAPI(title="Helpdesk API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # In-memory store: ticket_id -> Ticket
 _store: dict[UUID, Ticket] = {}
@@ -50,6 +58,11 @@ def _to_response(ticket: Ticket) -> TicketResponse:
 # ------------------------------------------------------------------ #
 # Endpoints                                                           #
 # ------------------------------------------------------------------ #
+
+@app.get("/tickets", response_model=list[TicketResponse])
+def list_tickets() -> list[TicketResponse]:
+    return [_to_response(t) for t in _store.values()]
+
 
 @app.post("/tickets", response_model=TicketResponse, status_code=201)
 def open_ticket(body: OpenTicketRequest) -> TicketResponse:
