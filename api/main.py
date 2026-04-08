@@ -4,6 +4,8 @@ from uuid import UUID
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from ticket.domain.aggregates import Ticket, TicketError
 from ticket.domain.value_objects import MessageAuthor
@@ -27,6 +29,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.mount("/static", StaticFiles(directory="webapp"), name="static")
+
+
+@app.get("/")
+def index() -> FileResponse:
+    return FileResponse("webapp/index.html")
+
 
 # In-memory store: ticket_id -> Ticket
 _store: dict[UUID, Ticket] = {}
